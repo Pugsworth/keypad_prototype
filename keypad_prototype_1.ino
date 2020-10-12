@@ -38,7 +38,7 @@ byte colPins[cols] = {10, 16, 14};
 byte rowPins[rows] = {7, 8, 9};
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, rows, cols);
-Sliders sliders = Sliders(2, new int[2] {A3, A2});
+Sliders sliders = Sliders(2, (const uint8_t[]){A3, A2});
 
 long slidersNextUpdate = millis();
 long slidersUpdateRate = 10; // 100ms
@@ -119,37 +119,22 @@ void keypadEvent(KeypadEvent key) {
 
 void loop()
 {
+  // sliders update
   if (slidersNextUpdate < millis()) {
     sliders.update();
-    // sliders.sendValues();
+    sliders.sendValues();
     slidersNextUpdate = millis() + slidersUpdateRate;
+  }
+
+  // light update
+  if (lightNextUpdate < millis()) {
+    digitalWrite(pinLED, LOW);
   }
   
   keypad.getKeys();
-
-  lightUpdate();
-  
-  /*
-  char key = keypad.getKey();
-  
-  if (key) {
-    Keyboard.write(key);
-    Serial.println(key);
-    digitalWrite(pinLED, HIGH);
-  }
-  else {
-    digitalWrite(pinLED, LOW);
-  }
-  */
 }
 
 void light() {
   digitalWrite(pinLED, HIGH);
   lightNextUpdate = millis() + lightUpdateRate;
-}
-
-void lightUpdate() {
-  if (lightNextUpdate < millis()) {
-    digitalWrite(pinLED, LOW);
-  }
 }

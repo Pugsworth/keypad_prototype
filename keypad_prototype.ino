@@ -15,23 +15,24 @@ char keys[rows][cols] = {
   {8, 5, 2}
 };
 
-// ID to keystroke array.
-// Rotation corrected
-// |0|1|2|
-// |3|4|5|
-// |6|7|8|
-Keystroke keystrokes[] {
-  Keystroke(KEY_LEFT_SHIFT).with('t'),
-  Keystroke(KEYPAD_8),
-  Keystroke(KEYPAD_9),
+/* ID to keystroke array.
+ * Rotation corrected
+ * |0|1|2|
+ * |3|4|5|
+ * |6|7|8|
+*/
+Keystroke *keystrokes[] {
+  new Keystroke(KEY_LEFT_SHIFT),
+  (new Keystroke(KEY_LEFT_SHIFT))->with('t'),
+  new Keystroke('t'),
   
-  Keystroke(KEY_LEFT_ARROW),
-  Keystroke(KEY_MUTE),
-  Keystroke(KEY_RIGHT_ARROW),
+  new Keystroke(KEY_LEFT_ARROW),
+  new Keystroke("Testing!"),
+  new Keystroke(KEY_RIGHT_ARROW),
   
-  Keystroke(KEY_6),
-  Keystroke('9'),
-  Keystroke(KEY_LEFT_CTRL).with(KEY_LEFT_SHIFT).with(KEY_ESC)
+  new Keystroke(KEY_A),
+  new Keystroke('9'),
+  (new Keystroke(KEY_LEFT_CTRL))->with(KEY_LEFT_SHIFT)->with(KEY_ESC)
 };
 
 byte colPins[cols] = {10, 16, 14};
@@ -53,10 +54,17 @@ void setup()
   sliders.begin();
   Keyboard.begin();
   while (!Serial){}
-  delay(1000);
 
-  Keystroke k = Keystroke(KEY_LEFT_SHIFT).with('t');
-  // Serial.println(k->getStrokes());
+  Serial.print("'9' is "); Serial.println('9');
+  Keystroke ks = Keystroke('9');
+  Serial.print("Keystroke('9') is "); Serial.println((char)ks.next());
+
+  Serial.print("KEY_A is "); Serial.println(KEY_A);
+  ks = Keystroke(KEY_A);
+  Serial.print("Keystroke(KEY_A) is "); Serial.println(ks.getKey());
+
+  Serial.flush();
+  
 
   keypad.setDebounceTime(5);
   keypad.addEventListener(keypadEvent);
@@ -64,45 +72,39 @@ void setup()
 
 void sendKeystroke(KeypadEvent btn)
 {
-  // Keyboard.write((KeyboardKeycode) key);
-  Keystroke *node = &keystrokes[btn];
-
-  // Serial.print((uint8_t)key); Serial.print(" - "); Serial.println((char[]) strokes.getStrokes());
-
+  Keystroke *node = keystrokes[btn];
   bool used_modifier = false;
   
   while(node != NULL) {
     light();
 
+    node->print();
+
     if (node->isModifier()) {
-      Keyboard.press(node->getKey());
+      Serial.print("Modifier is being pressed: "); Serial.println(node->getKey());
+      Keyboard.press((KeyboardKeycode)node->getKey());
       used_modifier = true;
     }
     else if (node->isEnum()) {
-      node->print();
-      Keyboard.write(node->getKey());
+      Keyboard.write((KeyboardKeycode)node->getKey());
     }
     else if (node->isSingleKey()) {
       Keyboard.write(node->next());
     }
     else {
-      Serial.println(F("writing characters:"));
-      
       node->rewind();
       while (node->hasNext()) {
         const char _ch = node->next();
         Keyboard.write(_ch);
-        Serial.print(_ch);
       }
-
-      Serial.println();
-    }
-
-    if (used_modifier) {
-      Keyboard.releaseAll();
     }
     
     node = node->nextNode();
+    Serial.println();
+  }
+
+  if (used_modifier) {
+    Keyboard.releaseAll();
   }
 
 }

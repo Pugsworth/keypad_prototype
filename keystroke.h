@@ -53,23 +53,30 @@ enum keystroke_t {KEYSTROKE, MODIFIER, COMBINATION};
 // This is both an object representing the data of a keystroke and a node
 class Keystroke {
   private:
-    char *_chars; // for successive key pressed
-    int _key; // for KEY_* enums and modifiers
+    char _chars[16] = {}; // for successive key pressed
+    int _key = -1; // for KEY_* enums and modifiers
     uint8_t _cursor   = 0;
     uint8_t _length   = 0;
     bool _isSingleKey = false;
     bool _isEnum      = false; // check _key instead of _chars
     bool _isModifier  = false;
-    Keystroke *_nextKeystroke;
+    Keystroke *_nextKeystroke = NULL;
+
+    void append(Keystroke *parent, Keystroke *newNode) {
+      Keystroke *last = parent;
+      while (last->hasNextNode()) {
+        last = last->nextNode();
+      }
+    
+      last->setNextNode(newNode);
+    }
     
   public:
     Keystroke() {
-      Serial.println(F("Keystroke()"));
     }
 
     Keystroke(char key)
     {
-      Serial.print(F("Keystroke(char key) is: ")); Serial.println(key);
         _isSingleKey = true;
         _length = 1;
         _chars[0] = key;
@@ -78,7 +85,6 @@ class Keystroke {
 
     Keystroke(char *keys)
     {
-      Serial.println(F("Keystroke(char *keys)"));
         for (uint8_t i=0; i<10; i++)
         {
             if (keys[i] == '\0')
@@ -89,14 +95,11 @@ class Keystroke {
                     _length = 1;
                 }
             }
-            Serial.print(keys[i]);
             _chars[i] = keys[i];
         }
     }
 
     Keystroke(int key) {
-      Serial.println(F("Keystroke(int key)"));
-      Serial.println(key);
       _key = key;
       if (Keystroke::IsKeyModifier(key)) {
         _isModifier = true;
@@ -125,6 +128,7 @@ class Keystroke {
     void print() {
       Serial.print(F("_key: ")); Serial.println(_key);
       Serial.print(F("*_chars: ")); Serial.println(_chars);
+      Serial.flush();
     }
 
     Keystroke* nextNode();
@@ -140,7 +144,7 @@ class Keystroke {
     bool isEnum();
     bool isSingleKey();
     
-    Keystroke with(char key);
-    Keystroke with(char* keys);
-    Keystroke with(int key);
+    Keystroke* with(char key);
+    Keystroke* with(char* keys);
+    Keystroke* with(int key);
 };

@@ -20,7 +20,7 @@ inline const char Keystroke::next()
 {
     if (_isSingleKey) { _cursor++; return _chars[0]; }
 
-    char temp = _chars[_cursor++];
+    const char temp = _chars[_cursor++];
     if (temp == '\0') {
         // rewind();
     }
@@ -66,20 +66,20 @@ inline bool Keystroke::isSingleKey() {
   return _isSingleKey;
 }
 
-inline Keystroke Keystroke::with(char key) { // single key
-  Keystroke ks = Keystroke(key);
-  this->setNextNode(&ks);
-  return ks;
+inline Keystroke* Keystroke::with(char key) { // single key
+  Keystroke *ks = new Keystroke(key);
+  append(this, ks);
+  return this;
 }
 
-inline Keystroke Keystroke::with(char* keys) { // string of keys
-  Keystroke ks = Keystroke(keys);
-  this->setNextNode(&ks);
-  return ks;
+inline Keystroke* Keystroke::with(char* keys) { // string of keys
+  Keystroke *ks = new Keystroke(keys);
+  append(this, ks);
+  return this;
 }
 
-inline Keystroke Keystroke::with(int key) { // key_* enum or modifiers
-  Keystroke ks = Keystroke(key);
-  this->setNextNode(&ks);
-  return ks;
+inline Keystroke* Keystroke::with(int key) { // key_* enum or modifiers
+  Keystroke *ks = new Keystroke(key);
+  append(this, ks);
+  return this;
 }

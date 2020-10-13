@@ -1,118 +1,85 @@
 #include <stdint.h>
 #include <Arduino.h>
+#include <HID-Project.h>
+#include "keystroke.h"
 
-#define KEY_LEFT_CTRL   0x80
-#define KEY_LEFT_SHIFT  0x81
-#define KEY_LEFT_ALT    0x82
-#define KEY_RIGHT_CTRL  0x84
-#define KEY_RIGHT_SHIFT 0x85
-#define KEY_RIGHT_ALT   0x86
 
-struct modifiers_t {
-  bool ctrl;
-  bool shift;
-  bool alt;
-};
+inline Keystroke* Keystroke::nextNode() { // linked list
+  return _nextKeystroke;
+}
 
-class Keystroke {
-  private:
-    char _strokes[11] {};
-    uint8_t _pos = 0;
-    uint8_t _length = 0;
-    bool _isSingle = false;
-    bool _hasModifiers = false;
-    modifiers_t _modifiers;
-    
-  public:
-    Keystroke() {
+inline void Keystroke::setNextNode(Keystroke *ks) {
+  _nextKeystroke = ks;
+}
 
+inline bool Keystroke::hasNextNode() {
+  return _nextKeystroke != NULL;
+}
+
+inline const char Keystroke::next()
+{
+    if (_isSingleKey) { _cursor++; return _chars[0]; }
+
+    char temp = _chars[_cursor++];
+    if (temp == '\0') {
+        // rewind();
     }
 
-    Keystroke(char* strokes)
-    {
-        for (uint8_t i=0; i<10; i++)
-        {
-            if (strokes[i] == '\0')
-            {
-                _length = i;
-                if (i == 1) {
-                    _isSingle = true;
-                    _length = 1;
-                }
-            }
+    return temp;
+}
 
-            _strokes[i] = (char)strokes[i];
-        }
-    }
+inline bool Keystroke::hasNext()
+{
+  // Serial.println("hasNext");
+  // Serial.print(_cursor); Serial.print(" -> "); Serial.println(_length);
+  if (_cursor >= _length) {
+    return false;
+  }
+  return true;
+}
 
-    Keystroke(char stroke)
-    {
-        _isSingle = true;
-        _length = 1;
-        _strokes[0] = stroke;
-        _strokes[1] = '\0';
-    }
+inline void Keystroke::rewind() {
+    _cursor = 0;
+}
 
-    Keystroke setModifier(uint8_t mod, bool value) {
-      switch(mod) {
-        case KEY_LEFT_CTRL:
-        case KEY_RIGHT_CTRL:
-          _modifiers.ctrl = value;
-          break;
-        case KEY_LEFT_SHIFT:
-        case KEY_RIGHT_SHIFT:
-          _modifiers.shift = value;
-          break;
-        case KEY_LEFT_ALT:
-        case KEY_RIGHT_ALT:
-          _modifiers.alt = value;
-          break;
-        default:
-          break;
-      }
-      _hasModifiers = true;
-      return this;
-    }
+inline const char* Keystroke::getStrokes() {
+    return _chars;
+}
 
-    char next()
-    {
-        if (_isSingle) { _pos++; return _strokes[0]; }
+inline int Keystroke::getKey() {
+  return _key;
+}
 
-        char temp = _strokes[_pos++];
-        if (temp == '\0') {
-            // rewind();
-        }
+inline uint8_t Keystroke::length() {
+  return _length;
+}
 
-        return temp;
-    }
+inline bool Keystroke::isModifier() {
+  return _isModifier;
+}
 
-    bool hasNext()
-    {
-      // Serial.println("hasNext");
-      // Serial.print(_pos); Serial.print(" -> "); Serial.println(_length);
-      if (_pos >= _length) {
-        return false;
-      }
-      return true;
-    }
+inline bool Keystroke::isEnum() {
+  return _isEnum;
+}
 
-    void rewind() {
-        _pos = 0;
-    }
+inline bool Keystroke::isSingleKey() {
+  return _isSingleKey;
+}
 
-    char* getStrokes() {
-        return _strokes;
-    }
+inline Keystroke Keystroke::with(char key) { // single key
+  Keystroke ks = Keystroke(key);
+  this->setNextNode(&ks);
+  return ks;
+}
 
-    uint8_t length() {
-      return _length;
-    }
+inline Keystroke Keystroke::with(char* keys) { // string of keys
+  Keystroke ks = Keystroke(keys);
+  this->setNextNode(&ks);
+  return ks;
+}
 
-    bool hasModifiers() {
-      return _hasModifiers;
-    }
-
-    modifiers_t getModifiers() {
-      return _modifiers;
-    }
-};
+inline Keystroke Keystroke::with(int key) { // key_* enum or modifiers
+  Keystroke ks = Keystroke(key);
+  this->setNextNode(&ks);
+  return ks;
+}

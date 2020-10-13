@@ -21,17 +21,17 @@ char keys[rows][cols] = {
 // |3|4|5|
 // |6|7|8|
 Keystroke keystrokes[] {
-  Keystroke('t').setModifier(KEY_LEFT_SHIFT, true),
-  Keystroke('b'),
-  Keystroke('c'),
+  Keystroke(KEY_LEFT_SHIFT).with('t'),
+  Keystroke(KEYPAD_8),
+  Keystroke(KEYPAD_9),
   
-  Keystroke('d'),
-  Keystroke('e'),
-  Keystroke('f'),
+  Keystroke(KEY_LEFT_ARROW),
+  Keystroke(KEY_MUTE),
+  Keystroke(KEY_RIGHT_ARROW),
   
-  Keystroke('g'),
-  Keystroke('h'),
-  Keystroke('t')
+  Keystroke(KEY_6),
+  Keystroke('9'),
+  Keystroke(KEY_LEFT_CTRL).with(KEY_LEFT_SHIFT).with(KEY_ESC)
 };
 
 byte colPins[cols] = {10, 16, 14};
@@ -52,52 +52,59 @@ void setup()
   Serial.begin(9600);
   sliders.begin();
   Keyboard.begin();
+  while (!Serial){}
   delay(1000);
 
+  Keystroke k = Keystroke(KEY_LEFT_SHIFT).with('t');
+  // Serial.println(k->getStrokes());
+
   keypad.setDebounceTime(5);
-
   keypad.addEventListener(keypadEvent);
-
-  // char test[] = {KEY_LEFT_CTRL, KEY_BACKSPACE, '\0'};
-  // keystrokes[8] = Keystroke(test);
 }
 
-void sendKeystroke(KeypadEvent key)
+void sendKeystroke(KeypadEvent btn)
 {
   // Keyboard.write((KeyboardKeycode) key);
-  Keystroke strokes = keystrokes[(uint8_t)key];
+  Keystroke *node = &keystrokes[btn];
 
   // Serial.print((uint8_t)key); Serial.print(" - "); Serial.println((char[]) strokes.getStrokes());
 
-  bool has_modifiers = strokes.hasModifiers();
-
-  if (has_modifiers) {
-    modifiers_t modifiers = strokes.getModifiers();
-    
-    if (modifiers.ctrl) {
-      Keyboard.press(KEY_LEFT_CTRL);
-    }
-    if (modifiers.shift) {
-      Keyboard.press(KEY_LEFT_SHIFT);
-    }
-    if (modifiers.alt) {
-      Keyboard.press(KEY_LEFT_ALT);
-    }
-  }
+  bool used_modifier = false;
   
-  while (strokes.hasNext())
-  {
-    uint8_t nextStroke = strokes.next();
-    char stroke = (char)nextStroke;
-
+  while(node != NULL) {
     light();
 
-      Keyboard.write(stroke);
+    if (node->isModifier()) {
+      Keyboard.press(node->getKey());
+      used_modifier = true;
+    }
+    else if (node->isEnum()) {
+      node->print();
+      Keyboard.write(node->getKey());
+    }
+    else if (node->isSingleKey()) {
+      Keyboard.write(node->next());
+    }
+    else {
+      Serial.println(F("writing characters:"));
+      
+      node->rewind();
+      while (node->hasNext()) {
+        const char _ch = node->next();
+        Keyboard.write(_ch);
+        Serial.print(_ch);
+      }
+
+      Serial.println();
+    }
+
+    if (used_modifier) {
+      Keyboard.releaseAll();
+    }
+    
+    node = node->nextNode();
   }
-  
-  if (has_modifiers) {
-    Keyboard.releaseAll();
-  }
+
 }
 
 void keypadEvent(KeypadEvent key) {
@@ -122,7 +129,7 @@ void loop()
   // sliders update
   if (slidersNextUpdate < millis()) {
     sliders.update();
-    sliders.sendValues();
+    // sliders.sendValues();
     slidersNextUpdate = millis() + slidersUpdateRate;
   }
 

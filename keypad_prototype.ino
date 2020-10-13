@@ -121,7 +121,7 @@ void loop()
   // sliders update
   if (slidersNextUpdate < millis()) {
     sliders.update();
-    // sliders.sendValues();
+    sliders.sendValues();
     slidersNextUpdate = millis() + slidersUpdateRate;
   }
 

@@ -50,16 +50,27 @@ class Sliders {
     void sendValues() {
       String buildString = String("");
 
-      for (uint8_t i = 0; i < _numSliders; i++) {
-        buildString += String((int)_sliders[i]->value);
-        _sliders[i]->dirtyFlag = false;
+      bool isDirty = false;
 
-        if (i < _numSliders - 1) {
-          buildString += String("|");
+      // first, we have to check if anything changed
+      for (uint8_t i = 0; i < _numSliders; i++) {
+        if (_sliders[i]->dirtyFlag) {
+          isDirty = true;
+          break;
         }
       }
 
-      Serial.println(buildString);
-    }
+      if (isDirty) {
+        for (uint8_t i = 0; i < _numSliders; i++) {
+          buildString += String((int)_sliders[i]->value);
+          _sliders[i]->dirtyFlag = false;
   
+          if (i < _numSliders - 1) {
+            buildString += String("|");
+          }
+        }
+  
+        Serial.println(buildString);
+      }
+    }
 };

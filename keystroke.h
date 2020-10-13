@@ -25,15 +25,6 @@
  *       released when released respectably.
  */
 
-union modifiers_t {
-  uint8_t bits;
-  struct {
-    bool ctrl;
-    bool shift;
-    bool alt;
-  };
-};
-
 /*
  * The type of keystroke this is.
  *  KEYSTROKE
@@ -85,7 +76,7 @@ class Keystroke {
 
     Keystroke(char *keys)
     {
-        for (uint8_t i=0; i<10; i++)
+        for (uint8_t i=0; i<16; i++)
         {
             if (keys[i] == '\0')
             {

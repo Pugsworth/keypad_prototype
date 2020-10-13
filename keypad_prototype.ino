@@ -22,12 +22,12 @@ char keys[rows][cols] = {
  * |6|7|8|
 */
 Keystroke *keystrokes[] {
-  new Keystroke(KEY_LEFT_SHIFT),
+  new Keystroke("Hello World!"),
   (new Keystroke(KEY_LEFT_SHIFT))->with('t'),
   new Keystroke('t'),
   
   new Keystroke(KEY_LEFT_ARROW),
-  new Keystroke("Testing!"),
+  new Keystroke(KEYPAD_5),
   new Keystroke(KEY_RIGHT_ARROW),
   
   new Keystroke(KEY_A),
@@ -52,22 +52,17 @@ void setup()
   pinMode(pinLED, OUTPUT);
   Serial.begin(9600);
   sliders.begin();
-  Keyboard.begin();
+  BootKeyboard.begin();
   while (!Serial){}
-
-  Serial.print("'9' is "); Serial.println('9');
-  Keystroke ks = Keystroke('9');
-  Serial.print("Keystroke('9') is "); Serial.println((char)ks.next());
-
-  Serial.print("KEY_A is "); Serial.println(KEY_A);
-  ks = Keystroke(KEY_A);
-  Serial.print("Keystroke(KEY_A) is "); Serial.println(ks.getKey());
-
-  Serial.flush();
   
-
   keypad.setDebounceTime(5);
   keypad.addEventListener(keypadEvent);
+}
+
+void checkNumLock() {
+  if (!(BootKeyboard.getLeds() & LED_NUM_LOCK)) {
+    BootKeyboard.write(KEY_NUM_LOCK);
+  }
 }
 
 void sendKeystroke(KeypadEvent btn)
@@ -78,33 +73,28 @@ void sendKeystroke(KeypadEvent btn)
   while(node != NULL) {
     light();
 
-    node->print();
-
     if (node->isModifier()) {
-      Serial.print("Modifier is being pressed: "); Serial.println(node->getKey());
-      Keyboard.press((KeyboardKeycode)node->getKey());
+      BootKeyboard.press((KeyboardKeycode)node->getKey());
       used_modifier = true;
     }
     else if (node->isEnum()) {
-      Keyboard.write((KeyboardKeycode)node->getKey());
+      BootKeyboard.write((KeyboardKeycode)node->getKey());
     }
     else if (node->isSingleKey()) {
-      Keyboard.write(node->next());
+      BootKeyboard.write(node->next());
     }
     else {
       node->rewind();
       while (node->hasNext()) {
-        const char _ch = node->next();
-        Keyboard.write(_ch);
+        BootKeyboard.write(node->next());
       }
     }
     
     node = node->nextNode();
-    Serial.println();
   }
 
   if (used_modifier) {
-    Keyboard.releaseAll();
+    BootKeyboard.releaseAll();
   }
 
 }
@@ -139,6 +129,8 @@ void loop()
   if (lightNextUpdate < millis()) {
     digitalWrite(pinLED, LOW);
   }
+
+  checkNumLock(); // ensure numlock is always enabled
   
   keypad.getKeys();
 }

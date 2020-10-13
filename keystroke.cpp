@@ -19,23 +19,17 @@ inline bool Keystroke::hasNextNode() {
 inline const char Keystroke::next()
 {
     if (_isSingleKey) { _cursor++; return _chars[0]; }
-
-    const char temp = _chars[_cursor++];
-    if (temp == '\0') {
-        // rewind();
+    if (hasNext()) {
+      return _chars[_cursor++];
     }
-
-    return temp;
+    else {
+      return NULL;
+    }
 }
 
 inline bool Keystroke::hasNext()
 {
-  // Serial.println("hasNext");
-  // Serial.print(_cursor); Serial.print(" -> "); Serial.println(_length);
-  if (_cursor >= _length) {
-    return false;
-  }
-  return true;
+  return _cursor < _length;
 }
 
 inline void Keystroke::rewind() {
